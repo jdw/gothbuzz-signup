@@ -1,0 +1,6 @@
+applicationType: default
+defaultPackage: eu.symmetrysought.gothbuzz
+testFramework: junit
+sourceLanguage: kotlin
+buildTool: gradle
+features: [app-name, google-cloud-function, google-cloud-function-http, gradle, http-client-test, jackson-databind, junit, kotlin, kotlin-application, ksp, logback, micronaut-aot, micronaut-build, micronaut-http-validation, properties, readme, shade, static-resources]
