@@ -10,10 +10,9 @@ import io.micronaut.core.annotation.Introspected
 
 @Controller("/")
 class IndexController {
-
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.TEXT_HTML)
     @Get
     fun index(): String {
-        return "Example Response"
+        return IndexController::class.java.getResource("/web/index.html")!!.readText()
     }
 }
