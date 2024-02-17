@@ -7,7 +7,10 @@
     gcloud auth login
 ## Gcloud select project
     gcloud config set project gothbuzz-signup
-## Upload the function with
+## Compile and upload
+    ./gradlew shadowJar
+    cd build/libs
+    (remove all JARs except the latest)
      gcloud functions deploy signup --entry-point io.micronaut.gcp.function.http.HttpFunction --runtime java21 --trigger-http --gen2 --allow-unauthenticated         
 ## Created a Google Cloud Storage bucket with:
     gcloud storage buckets create gs://<name of bucket> --location=europe-west1
