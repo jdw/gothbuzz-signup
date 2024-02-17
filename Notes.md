@@ -13,7 +13,9 @@
 ### Gcloud SSO
     gcloud auth login
 ### Gcloud select project
-    gcloud config set project gothbuzz-signup
+    gcloud config set project <project id>
+### Gcloud set default project
+    gcloud auth application-default login
 ### Compile and upload
     ./gradlew shadowJar
     cd build/libs
