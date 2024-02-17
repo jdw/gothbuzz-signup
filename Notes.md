@@ -14,13 +14,23 @@
     gcloud auth login
 ### Gcloud select project
     gcloud config set project <project id>
-### Gcloud set default project
-    gcloud auth application-default login
+
+or
+
+    gcloud config get project
+### Enable secrets and cloud functions API for project
+    gcloud services enable secretmanager.googleapis.com cloudfunctions.googleapis.com
+    gcloud secrets create <secret name> --replication-policy="automatic"
+    gcloud secrets versions add <secret name> --data-file <filename>
+    gcloud iam service-accounts create <project name>-identity
+    gcloud secrets add-iam-policy-binding <secret name> \
+        --member serviceAccount:<project name>-identity@<project id>.iam.gserviceaccount.com \
+        --role roles/secretmanager.secretAccessor
 ### Compile and upload
     ./gradlew shadowJar
     cd build/libs
     (remove all JARs except the latest)
-     gcloud functions deploy signup --entry-point io.micronaut.gcp.function.http.HttpFunction --runtime java17 --trigger-http --gen2 --allow-unauthenticated         
+     gcloud functions deploy <gradle project.name> --entry-point io.micronaut.gcp.function.http.HttpFunction --runtime java17 --trigger-http --gen2 --allow-unauthenticated         
 ### Created a Google Cloud Storage bucket with:
     gcloud storage buckets create gs://<name of bucket> --location=europe-west1
 ## Service accounts and their keys

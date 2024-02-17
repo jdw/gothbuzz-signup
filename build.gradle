@@ -25,8 +25,10 @@ dependencies {
     implementation("com.google.cloud:google-cloud-secretmanager:${googleCloudVersion}")
 
     compileOnly("io.micronaut:micronaut-http-client")
+    compileOnly("io.micronaut.gcp:micronaut-gcp-secret-manager")
     runtimeOnly("ch.qos.logback:logback-classic")
     runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin")
+
 
     testImplementation("io.micronaut:micronaut-http-client")
 }

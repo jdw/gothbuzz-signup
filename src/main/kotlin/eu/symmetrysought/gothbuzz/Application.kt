@@ -20,7 +20,7 @@ class CheckEnvironmentAndConfiguration : ApplicationEventListener<StartupEvent> 
 	}
 	override fun onApplicationEvent(event: StartupEvent) {
 		logger.info("Checking if environment is OK...")
-		val implementedEnvironmentVariables = listOf("GOTHBUZZ_ENVIRONMENT_NAME", "GOTHBUZZ_BUCKET_NAME", "GOTHBUZZ_BUCKET_SA_KEY")
+		val implementedEnvironmentVariables = listOf("GOTHBUZZ_PROJECT_ID", "GOTHBUZZ_ENVIRONMENT_NAME", "GOTHBUZZ_BUCKET_NAME", "GOTHBUZZ_BUCKET_SA_KEY")
 		val quitValues = implementedEnvironmentVariables.associateWith { 0 }.toMutableMap()
 		val okValues = mapOf("GOTHBUZZ_ENVIRONMENT_NAME" to listOf("local", "prod"))
 		val environmentVariableNameToJsonParser: Map<String, (String) -> Result<JsonObject>> =
@@ -78,13 +78,10 @@ class CheckEnvironmentAndConfiguration : ApplicationEventListener<StartupEvent> 
 			System.getenv(name)!!
 		}
 		catch (_: Exception) {
-			val secretVersionName =
-				SecretVersionName.of(Glob.projectId, name, "latest") ?:
-					return null
-				val accessResponse = secretManagerServiceClient.accessSecretVersion(secretVersionName)
+			val secretVersionName = SecretVersionName.of(Glob.projectId, name, "latest") ?: return null
+			val accessResponse = secretManagerServiceClient.accessSecretVersion(secretVersionName)
 			accessResponse.payload.data.toStringUtf8()
 		}
-
 	}
 
 	companion object {
