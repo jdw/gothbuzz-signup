@@ -1,7 +1,5 @@
 package eu.symmetrysought.gothbuzz
 
-import com.google.cloud.secretmanager.v1.SecretManagerServiceClient
-import com.google.cloud.secretmanager.v1.SecretVersionName
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -10,19 +8,26 @@ object Glob {
     var bucketSaKey: String = ""
         get() {
             if ("" == field) {
-                val secretId = "GOTHBUZZ_BUCKET_SA_KEY"
-                SecretManagerServiceClient.create().use { client ->
-                    SecretVersionName.of(projectId, secretId, "latest").let { secretVersionName ->
-                        val accessResponse = client.accessSecretVersion(secretVersionName)
-                        field = accessResponse.payload.data.toStringUtf8()
-                    }
-
-                    if ("" == field) field = System.getenv(secretId)!!
+                val data = System.getenv("GOTHBUZZ_BUCKET_SA_KEY")
+                if (null == data) {
+                    logger.warn(""""GOTHBUZZ_BUCKET_SA_KEY" not set!""")
                 }
+                field = data
             }
             return field
         }
+
     var environment: String = ""
+        get() {
+            if ("" == field) {
+                val data = System.getenv("GOTHBUZZ_ENVIRONMENT_NAME")
+                if (null == data) {
+                    logger.warn(""""GOTHBUZZ_ENVIRONMENT_NAME" not set!""")
+                }
+                field = data
+            }
+            return field
+        }
     var projectId: String = ""
         get() {
             if ("" == field) {

@@ -1,23 +1,19 @@
 package eu.symmetrysought.gothbuzz
 
-import com.google.gson.JsonObject
 import com.google.gson.Gson
+import com.google.gson.JsonObject
 import io.micronaut.context.event.ApplicationEventListener
 import io.micronaut.context.event.StartupEvent
 import io.micronaut.runtime.Micronaut.run
 import jakarta.inject.Singleton
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import com.google.cloud.secretmanager.v1.SecretManagerServiceClient
-import com.google.cloud.secretmanager.v1.SecretVersionName
 
 
 @Singleton
 class CheckEnvironmentAndConfiguration : ApplicationEventListener<StartupEvent> {
 	private val logger: Logger = LoggerFactory.getLogger(javaClass)
-	private val secretManagerServiceClient: SecretManagerServiceClient by lazy {
-		SecretManagerServiceClient.create()
-	}
+
 	override fun onApplicationEvent(event: StartupEvent) {
 		logger.info("Checking if environment is OK...")
 		val implementedEnvironmentVariables = listOf("GOTHBUZZ_PROJECT_ID", "GOTHBUZZ_ENVIRONMENT_NAME", "GOTHBUZZ_BUCKET_NAME", "GOTHBUZZ_BUCKET_SA_KEY")
@@ -73,16 +69,7 @@ class CheckEnvironmentAndConfiguration : ApplicationEventListener<StartupEvent> 
 		logger.info("Environment was found to be OK!")
 	}
 
-	private fun getFromEnvironmentVariableOrGoogleSecretData(name: String): String? {
-		return try {
-			System.getenv(name)!!
-		}
-		catch (_: Exception) {
-			val secretVersionName = SecretVersionName.of(Glob.projectId, name, "latest") ?: return null
-			val accessResponse = secretManagerServiceClient.accessSecretVersion(secretVersionName)
-			accessResponse.payload.data.toStringUtf8()
-		}
-	}
+	private fun getFromEnvironmentVariableOrGoogleSecretData(name: String): String? = System.getenv(name)
 
 	companion object {
 		private fun checkIfEnvironmentVariableDataIsJson(
