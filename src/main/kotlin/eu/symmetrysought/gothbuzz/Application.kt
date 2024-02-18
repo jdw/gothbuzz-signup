@@ -20,14 +20,14 @@ class CheckEnvironmentAndConfiguration : ApplicationEventListener<StartupEvent> 
 	}
 	override fun onApplicationEvent(event: StartupEvent) {
 		logger.info("Checking if environment is OK...")
-		val implementedEnvironmentVariables = listOf("GOTHBUZZ_PROJECT_ID", "GOTHBUZZ_ENVIRONMENT_NAME", "GOTHBUZZ_BUCKET_NAME", "GOTHBUZZ_BUCKET_SA_KEY")
+		val implementedEnvironmentVariables = listOf("GOTHBUZZ_PROJECT_ID", "GOTHBUZZ_ENVIRONMENT_NAME", "GOTHBUZZ_BUCKET_NAME", "GOTHBUZZ_BUCKET_SA_KEY", "GOTHBUZZ_VERIFY_EMAIL_API_KEY")
 		val quitValues = implementedEnvironmentVariables.associateWith { 0 }.toMutableMap()
 		val okValues = mapOf("GOTHBUZZ_ENVIRONMENT_NAME" to listOf("local", "prod"))
 		val environmentVariableNameToJsonParser: Map<String, (String) -> Result<JsonObject>> =
 			mapOf("GOTHBUZZ_BUCKET_SA_KEY" to { environmentVariableData: String -> checkIfEnvironmentVariableDataIsJson(environmentVariableData)})
 
 		implementedEnvironmentVariables.forEach { envVarName ->
-			getFromEnvironmentVariableOrGoogleSecretData(envVarName).let { envVarValue ->
+			System.getenv(envVarName).let { envVarValue ->
 				when (envVarValue) {
 					null -> {
 						logger.warn("$envVarName was not set!")
@@ -71,17 +71,6 @@ class CheckEnvironmentAndConfiguration : ApplicationEventListener<StartupEvent> 
 
 		quitValues.values.filter { 0 != it }.map { throw Exception("Error in environment configuration!") }
 		logger.info("Environment was found to be OK!")
-	}
-
-	private fun getFromEnvironmentVariableOrGoogleSecretData(name: String): String? {
-		return try {
-			System.getenv(name)!!
-		}
-		catch (_: Exception) {
-			val secretVersionName = SecretVersionName.of(Glob.projectId, name, "latest") ?: return null
-			val accessResponse = secretManagerServiceClient.accessSecretVersion(secretVersionName)
-			accessResponse.payload.data.toStringUtf8()
-		}
 	}
 
 	companion object {
