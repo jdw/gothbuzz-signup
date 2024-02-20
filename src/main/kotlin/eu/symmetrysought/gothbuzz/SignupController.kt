@@ -1,21 +1,22 @@
 package eu.symmetrysought.gothbuzz
 
-import io.micronaut.http.annotation.Controller
-import io.micronaut.http.annotation.Post
-import io.micronaut.http.annotation.Body
 import io.micronaut.http.MediaType
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.http.HttpResponse
-import io.micronaut.http.annotation.Consumes
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.annotation.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.net.URI
 
-@Controller("/signup")
+@Controller
 class SignupController() {
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
+
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Post
+    @Post("/signup")
     fun signup(@Body inputMessage: InputMessage): HttpResponse<*> {
+        logger.info("Got a visit to /signup...")
         val emailHandler = EmailHandler()
         val email = inputMessage.email
         if (!emailHandler.isValidEmail(email)) {
@@ -33,12 +34,22 @@ class SignupController() {
 
         return if (res.isSuccess) {
             emailHandler.addEmail(email, res.getOrThrow())
-            val ret = ReturnMessage("Your email address has been added. Please, follow the instructions we've sent you!", ReturnCode.ALL_OK)
-            HttpResponse.ok(ret).contentType(MediaType.APPLICATION_JSON)
+            HttpResponse.redirect<HttpResponse<String>>(URI.create("/signedup")).status(HttpStatus.NO_CONTENT)
         } else {
             val ret = ReturnMessage("Something went wrong, please try again at a later time!", ReturnCode.MAILSEND_ERROR)
             HttpResponse.badRequest(ret).contentType(MediaType.APPLICATION_JSON)
         }
+    }
+
+
+    @Get("/signedup")
+    fun signedup(): HttpResponse<*> {
+        logger.info("Got a visit to /signedup...")
+        val base = IndexController::class.java.getResource("/web/base.html")!!.readText()
+        val data = IndexController::class.java.getResource("/web/signedup.json")!!.readText()
+        val body = Glob.applyTemplate(base, data)
+
+        return HttpResponse.ok(body).contentType(MediaType.TEXT_HTML)
     }
 }
 

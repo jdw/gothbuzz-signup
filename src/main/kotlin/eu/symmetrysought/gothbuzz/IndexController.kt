@@ -18,7 +18,7 @@ class IndexController {
     @Produces(MediaType.TEXT_HTML)
     @Get("/")
     fun index(request: HttpRequest<*>): HttpResponse<*> {
-        logger.info("Got a visit...")
+        logger.info("Got a visit to /...")
 
         return when (request.path) {
             "/", "/index.html", "/index.htm" -> {

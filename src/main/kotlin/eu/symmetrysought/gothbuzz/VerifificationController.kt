@@ -20,6 +20,7 @@ class VerifyController {
 
     @Get("/verify/{code}")
     fun verify(@PathVariable("code") code: String): HttpResponse<*> {
+        logger.info("Got a visit to /verify/$code...")
         val result = emailHandler.verifyCode(code)
 
         return if (result.isSuccess) {
