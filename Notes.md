@@ -32,7 +32,7 @@ or
     (remove all JARs except the latest)
      gcloud functions deploy <gradle project.name> --entry-point io.micronaut.gcp.function.http.HttpFunction --runtime java17 --trigger-http --gen2 --allow-unauthenticated
 
-to expose environment variables or secrets to the funciton, add
+to expose environment variables or secrets to the function, add
     
     --set-env-vars "<nane>=<value>"
     --set-secrets "<name to expose as envvar>=<secret name>:latest"
@@ -67,25 +67,25 @@ to expose environment variables or secrets to the funciton, add
     --format="get(address)" \
     --global
 ### Create a network endpoint group
-    gcloud compute network-endpoint-groups create gothbuzz-neg-name \  
+    gcloud compute network-endpoint-groups create gothbuzz-neg-name \
     --region=europe-west1 \
-    --network-endpoint-type=serverless  \
+    --network-endpoint-type=serverless \
     --cloud-run-service=signup     
 ### Create backend rule set
-    gcloud compute backend-services create gothbuzz-backend \    
+    gcloud compute backend-services create gothbuzz-backend \
     --load-balancing-scheme=EXTERNAL \
     --global
-### Associate backend rule set and NEG
-    gcloud compute backend-services add-backend gothbuzz-backend \    
+### Associate backend rule set to NEG
+    gcloud compute backend-services add-backend gothbuzz-backend \
     --global \
-    --network-endpoint-group=gothbuzz-neg-name \  
+    --network-endpoint-group=gothbuzz-neg-name \
     --network-endpoint-group-region=europe-west1
 ### Create a URL map
     gcloud compute url-maps create gothbuzz-url-map \
     --default-service gothbuzz-backend 
 ### Create HTTPS proxy
-    gcloud compute target-https-proxies create gothbuzz-https-proxy \   
-    --ssl-certificates=gothbuzz \            
+    gcloud compute target-https-proxies create gothbuzz-https-proxy \
+    --ssl-certificates=gothbuzz \
     --url-map=gothbuzz-url-map
 ### Create forwarding rule set
     gcloud compute forwarding-rules create gothbuzz-https-forwarding \

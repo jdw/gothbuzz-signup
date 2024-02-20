@@ -7,7 +7,7 @@ plugins {
     id("io.micronaut.aot") version "4.3.2"
 }
 
-version = "0.1"
+version = "0.2.0"
 group = "eu.symmetrysought.gothbuzz"
 
 repositories {
@@ -23,8 +23,6 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlinVersion}")
     implementation("com.google.cloud:google-cloud-storage:${googleCloudVersion}")
     implementation("com.google.cloud:google-cloud-secretmanager:${googleCloudVersion}")
-    //implementation("com.sendgrid:sendgrid-java")
-    //implementation 'com.mailersend:java-sdk:1.0.0'
     implementation("com.sendgrid:sendgrid-java:4.10.2")
 
     compileOnly("io.micronaut:micronaut-http-client-jdk")

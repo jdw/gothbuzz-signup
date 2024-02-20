@@ -18,7 +18,7 @@ class SignupFunctionTest {
     @Test
     fun testPost(){
         HttpFunction().use { function ->
-            val input = SampleInputMessage("Test Name")
+            val input = InputMessage("Test Name")
             val request = HttpRequest.POST("/signup", input).contentType(MediaType.APPLICATION_JSON_TYPE)
             val response = function.invoke(request)
             Assertions.assertEquals(HttpStatus.OK, response.status)
