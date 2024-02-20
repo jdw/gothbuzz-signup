@@ -8,6 +8,7 @@ import com.google.cloud.storage.Bucket
 import com.google.cloud.storage.Storage
 import com.google.cloud.storage.StorageOptions
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlin.random.Random
 
 object Glob {
@@ -93,5 +94,19 @@ object Glob {
     fun logDebug(logger: Logger, message: String) {
         if ("prod" != GOTHBUZZ_ENVIRONMENT_NAME)
             logger.info(message)
+    }
+
+
+    fun applyTemplate(base: String, data: String): String {
+        val type = object : TypeToken<Map<String, String>>() {}.type
+        val variables: Map<String, String> = Gson().fromJson(data, type)
+        var ret = ""
+
+        variables.forEach { name, value ->
+            ret = if ("" == ret) base.replace("{{$name}}", value)
+                else ret.replace("{{$name}}", value)
+        }
+
+        return ret
     }
 }

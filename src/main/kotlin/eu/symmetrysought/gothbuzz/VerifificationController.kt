@@ -35,7 +35,11 @@ class VerifyController {
     @Get("/verified/")
     fun verified(): String {
         logger.info("Got a visit to /verified...")
-        return IndexController::class.java.getResource("/web/verified.html")!!.readText()
+        val base = IndexController::class.java.getResource("/web/base.html")!!.readText()
+        val data = IndexController::class.java.getResource("/web/verified.json")!!.readText()
+        val ret = Glob.applyTemplate(base, data)
+
+        return ret
     }
 }
 

@@ -22,39 +22,12 @@ class IndexController {
 
         return when (request.path) {
             "/", "/index.html", "/index.htm" -> {
-                val body = IndexController::class.java.getResource("/web/index.html")!!.readText()
+                val base = IndexController::class.java.getResource("/web/base.html")!!.readText()
+                val data = IndexController::class.java.getResource("/web/index.json")!!.readText()
+                val body = Glob.applyTemplate(base, data)
                 HttpResponse.ok(body).contentType(MediaType.TEXT_HTML)
             }
             else -> HttpResponse.redirect<HttpResponse<String>>(URI.create("/404/")).status(HttpStatus.MOVED_PERMANENTLY)
-        }
-    }
-
-    @Produces(MediaType.TEXT_HTML)
-    @Get("/{path}")
-    fun index(@PathVariable("path") path: String, request: HttpRequest<*>): HttpResponse<*> {
-        logger.info("Got a visit to /{path}...")
-        logger.info("${request.path}")
-        logger.info("${request.cookies}")
-        logger.info("${request.method}")
-        logger.info("${request.methodName}")
-        logger.info("${request.origin}")
-        logger.info("${request.uri}")
-        logger.info("${request.toString()}")
-        logger.info("Got a visit to /{path}...2")
-
-        return when (request.path) {
-            "/", "/index.html", "/index.htm" -> {
-                val body = IndexController::class.java.getResource("/web/index.html")!!.readText()
-                HttpResponse.ok(body).contentType(MediaType.TEXT_HTML)
-            }
-            "/verified.html" -> {
-                val body = IndexController::class.java.getResource("/web/verified.html")!!.readText()
-                HttpResponse.ok(body).contentType(MediaType.TEXT_HTML)
-            }
-            else -> {
-                val body = IndexController::class.java.getResource("/web/404.html")!!.readText()
-                HttpResponse.notFound(body).contentType(MediaType.TEXT_HTML)
-            }
         }
     }
 }

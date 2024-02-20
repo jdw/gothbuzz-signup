@@ -14,8 +14,9 @@ class NotFoundController() {
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
     @Get
     fun notFound(request: HttpRequest<String>): HttpResponse<*> {
-        logger.info("inside /404")
-        val body = IndexController::class.java.getResource("/web/404.html")!!.readText()
+        logger.info("Inside notfound...")
+        val body = IndexController::class.java.getResource("/web/base.html")!!.readText()
+        val jsonData = IndexController::class.java.getResource("/web/404.json")!!.readText()
         return HttpResponse.badRequest(body).contentType(MediaType.TEXT_HTML)
     }
 }
