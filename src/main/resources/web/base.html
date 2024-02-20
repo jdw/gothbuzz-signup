@@ -4,9 +4,91 @@
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
         <script src="https://cdn.jsdelivr.net/jquery.validation/1.15.1/jquery.validate.min.js"></script>
+        <script src="https://raw.githubusercontent.com/a-cosmic-jaw/gothbuzz-signup/main/src/main/resources/web/color-modes.js"></script>
         <link href="https://fonts.googleapis.com/css?family=Kaushan+Script" rel="stylesheet">
         <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
         <link href="https://raw.githubusercontent.com/a-cosmic-jaw/gothbuzz-signup/main/src/main/resources/web/heroes.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <style>
+            .bd-placeholder-img {
+              font-size: 1.125rem;
+              text-anchor: middle;
+              -webkit-user-select: none;
+              -moz-user-select: none;
+              user-select: none;
+            }
+
+            @media (min-width: 768px) {
+              .bd-placeholder-img-lg {
+                font-size: 3.5rem;
+              }
+            }
+
+            .b-example-divider {
+              width: 100%;
+              height: 3rem;
+              background-color: rgba(0, 0, 0, .1);
+              border: solid rgba(0, 0, 0, .15);
+              border-width: 1px 0;
+              box-shadow: inset 0 .5em 1.5em rgba(0, 0, 0, .1), inset 0 .125em .5em rgba(0, 0, 0, .15);
+            }
+
+            .b-example-vr {
+              flex-shrink: 0;
+              width: 1.5rem;
+              height: 100vh;
+            }
+
+            .bi {
+              vertical-align: -.125em;
+              fill: currentColor;
+            }
+
+            .nav-scroller {
+              position: relative;
+              z-index: 2;
+              height: 2.75rem;
+              overflow-y: hidden;
+            }
+
+            .nav-scroller .nav {
+              display: flex;
+              flex-wrap: nowrap;
+              padding-bottom: 1rem;
+              margin-top: -1px;
+              overflow-x: auto;
+              text-align: center;
+              white-space: nowrap;
+              -webkit-overflow-scrolling: touch;
+            }
+
+            .btn-bd-primary {
+              --bd-violet-bg: #712cf9;
+              --bd-violet-rgb: 112.520718, 44.062154, 249.437846;
+
+              --bs-btn-font-weight: 600;
+              --bs-btn-color: var(--bs-white);
+              --bs-btn-bg: var(--bd-violet-bg);
+              --bs-btn-border-color: var(--bd-violet-bg);
+              --bs-btn-hover-color: var(--bs-white);
+              --bs-btn-hover-bg: #6528e0;
+              --bs-btn-hover-border-color: #6528e0;
+              --bs-btn-focus-shadow-rgb: var(--bd-violet-rgb);
+              --bs-btn-active-color: var(--bs-btn-hover-color);
+              --bs-btn-active-bg: #5a23c8;
+              --bs-btn-active-border-color: #5a23c8;
+            }
+
+            .bd-mode-toggle {
+              z-index: 1500;
+            }
+
+            .bd-mode-toggle .dropdown-menu .active .bi {
+              display: block !important;
+            }
+        </style>
     </head>
     <body>
         <div class="container">
@@ -14,10 +96,10 @@
                 <div class="col-md-7 mx-auto">
                     <div class="myform form ">
                         <div class="logo mb-3 text-center" style="padding-top: 80px;">
-                            <img class="mb-4" src="https://raw.githubusercontent.com/a-cosmic-jaw/gothbuzz-signup/main/src/main/resources/web/gothbuzz-logo.png" alt="" width="100" height="100">
+                            <img class="mb-4" src="https://raw.githubusercontent.com/a-cosmic-jaw/gothbuzz-signup/main/src/main/resources/web/gothbuzz-logo.png" alt="" width="150" height="150">
                             <div class="col-md-12 text-center">
                                 {{message1}}
-                                <h3 class="h5 mb-3 font-weight-normal">{{message2}}</h3>
+                                <h1 class="h5 mb-3 font-weight-normal">{{message2}}</h1>
                                 {{message3}}
                             </div>
                         </div>
@@ -29,51 +111,47 @@
     </body>
 
     <footer class="text-center text-lg-start text-muted" style="background-color: rgba(0, 0, 0, 0.05);">
-        <section class="" style="padding:10px;">
-            <div class="container text-center text-md-start mt-5">
-                <div class="row mt-3">
-                    <div class="col-md-3 col-lg-4 col-xl-3 mx-auto mb-4">
-                        <h6 class="fw-bold mb-4"><i class="fas me-3"></i>&nbsp;</h6>
-                        <p>
-                            <a href="https://counter.social/@gothbuzz" class="text-reset">Counter Social</a>
-                        </p>
-                        <p>
-                            <a href="https://youtube.com/@gothbuzz" class="text-reset">YouTube</a>
-                        </p>
-                        <p>
-                            <a href="http://vimeo.com/gothbuzz" class="text-reset">Vimeo</a>
-                        </p>
+        <section>
+            <div class="container">
+                <footer class="row row-cols-1 row-cols-sm-2 row-cols-md-5 py-5 my-5 border-top">
+                    <div class="col mb-3">
+                        <a href="/" class="d-flex align-items-center mb-3 link-body-emphasis text-decoration-none">
+                            <svg class="bi me-2" width="40" height="32"><use xlink:href="#bootstrap"/></svg>
+                        </a>
+                        <p class="text-body-secondary">&copy; 2023 goth.buzz and Symmetry Sought</p>
                     </div>
 
-                    <div class="col-md-2 col-lg-2 col-xl-2 mx-auto mb-4">
-                        <!-- Links -->
-                        <h6 class="fw-bold mb-4">
-                            @gothbuzz
-                        </h6>
-                        <p>
-                            <a href="https://instagram.com/gothbuzz" class="text-reset">Instagram</a>
-                        </p>
-                        <p>
-                            <a href="https://x.com/gothbuzz" class="text-reset">X</a>
-                        </p>
-                        <p>
-                            <a href="https://soundcloud.com/gothbuzz" class="text-reset">Soundcloud</a>
-                        </p>
+                    <div class="col mb-3">
+
                     </div>
 
-                    <div class="col-md-3 col-lg-2 col-xl-2 mx-auto mb-4">
-                        <h6 class="text-uppercase fw-bold mb-4">&nbsp;</h6>
-                        <p>
-                            <a href="https://mastodon.social/@gothbuzz" class="text-reset">Mastodon</a>
-                        </p>
-                        <p>
-                            <a href="https://reddit.com/user/gothbuzz" class="text-reset">Reddit</a>
-                        </p>
-                        <p>
-                            <a href="https://medium.com/@gothbuzz" class="text-reset">Medium</a>
-                        </p>
+                    <div class="col mb-3">
+                        <h5>@gothbuzz</h5>
+                        <ul class="nav flex-column">
+                            <li class="nav-item mb-2"><a href="https://medium.com/@gothbuzz" class="nav-link p-0 text-body-secondary">Medium</a></li>
+                            <li class="nav-item mb-2"><a href="https://reddit.com/user/gothbuzz" class="nav-link p-0 text-body-secondary">Reddit</a></li>
+                            <li class="nav-item mb-2"><a href="https://mastodon.social/@gothbuzz" class="nav-link p-0 text-body-secondary">Mastodon</a></li>
+                        </ul>
                     </div>
-                </div>
+
+                    <div class="col mb-3">
+                        <h5>&nbsp;</h5>
+                        <ul class="nav flex-column">
+                            <li class="nav-item mb-2"><a href="https://soundcloud.com/gothbuzz" class="nav-link p-0 text-body-secondary">Soundcloud</a></li>
+                            <li class="nav-item mb-2"><a href="https://x.com/gothbuzz" class="nav-link p-0 text-body-secondary">X</a></li>
+                            <li class="nav-item mb-2"><a href="https://instagram.com/gothbuzz" class="nav-link p-0 text-body-secondary">Instagram</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="col mb-3">
+                        <h5>&nbsp;</h5>
+                        <ul class="nav flex-column">
+                            <li class="nav-item mb-2"><a href="http://vimeo.com/gothbuzz" class="nav-link p-0 text-body-secondary">Vimeo</a></li>
+                            <li class="nav-item mb-2"><a href="https://youtube.com/@gothbuzz" class="nav-link p-0 text-body-secondary">YouTube</a></li>
+                            <li class="nav-item mb-2"><a href="https://counter.social/@gothbuzz" class="nav-link p-0 text-body-secondary">Counter Social</a></li>
+                        </ul>
+                    </div>
+                </footer>
             </div>
         </section>
     </footer>
