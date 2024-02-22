@@ -13,7 +13,7 @@ import kotlin.random.Random
 
 object Glob {
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
-    private val environmentVariablesValue: MutableMap<String, String> = mutableMapOf()
+    private val environmentVariablesValue: MutableMap<String, String?> = mutableMapOf()
     val bucket: Bucket
     val GOTHBUZZ_SENDGRID_API_KEY: String by environmentVariablesValue
     val GOTHBUZZ_ENVIRONMENT_NAME: String by environmentVariablesValue
@@ -30,12 +30,29 @@ object Glob {
         val environmentVariablesErrors: MutableMap<String, MutableList<EnvironmentVariableError>> = implementedEnvironmentVariables.associateWith { mutableListOf<EnvironmentVariableError>() }.toMutableMap()
         val environmentVariableParsers: Map<String, (String) -> Boolean> = mapOf(
             "GOTHBUZZ_ENVIRONMENT_NAME" to { value -> "prod" == value || "local" == value },
-            "GOTHBUZZ_SENDGRID_API_KEY" to { value -> value.startsWith("SG.") && 69 == value.length }
+            "GOTHBUZZ_SENDGRID_API_KEY" to { value -> value.startsWith("SG.") && 69 == value.length },
+            "GOTHBUZZ_BUCKET_SA_KEY" to { value -> try { GoogleCredentials.fromStream(value.byteInputStream())
+                .createScoped(listOf("https://www.googleapis.com/auth/cloud-platform")); true } catch (_: Exception) { false}},
+            "GOTHBUZZ_NO_REPLY" to { value -> EmailHandler.isValidEmail(value) }
         )
 
         implementedEnvironmentVariables.forEach { name ->
-            System.getenv(name) ?: {
+            val value = System.getenv(name)
+            if (null == value) {
                 environmentVariablesErrors[name]?.add(EnvironmentVariableError.NOT_SET)
+                return@forEach
+            }
+
+            environmentVariablesValue[name] = value
+
+            if ("" == value) {
+                environmentVariablesErrors[name]?.add(EnvironmentVariableError.EMPTY)
+            }
+
+            environmentVariableParsers[name]?.let { parser ->
+                if (!parser.invoke(value)) {
+                    environmentVariablesErrors[name]?.add(EnvironmentVariableError.PARSER_FAILED)
+                }
             }
         }
 
@@ -43,36 +60,22 @@ object Glob {
                 name.startsWith("GOTHBUZZ_")
             }.map { (name, value) ->
                 if (!implementedEnvironmentVariables.contains(name)) {
+                    environmentVariablesErrors[name] = mutableListOf()
                     environmentVariablesErrors[name]?.add(EnvironmentVariableError.NOT_CONFIGURED)
                 }
                 if ("" == value) {
                     environmentVariablesErrors[name]?.add(EnvironmentVariableError.EMPTY)
                 }
-                if (environmentVariableParsers.containsKey(name)) {
-                    if (!environmentVariableParsers[name]!!.invoke(value)) {
-                        environmentVariablesErrors[name]?.add(EnvironmentVariableError.PARSER_FAILED)
-                    }
-            }
         }
 
-        val totalErrors = environmentVariablesErrors.filter { (name, errors) ->
-            errors.isNotEmpty()
-        }
+        // Throws exception (and so exits application) if there are any errors found
+        environmentVariablesErrors.values.filter { it.isNotEmpty() }.takeIf { it.isNotEmpty() }?.let { throw Exception(Gson().toJson(it)) }
 
-        if (totalErrors.isNotEmpty()) {
-            throw Exception(Gson().toJson(totalErrors))
-        }
-
-        logger.info("All environment variables configured...")
-        // "environmentVariablesErrors" now contains all possible GOTHBUZZ_ env vars and we have passed env vars checks
-        environmentVariablesErrors.forEach { (name, _) ->
-            environmentVariablesValue[name] = System.getenv(name) ?: ""
-        }
-
+        logger.info("All environment variables configured and found to be OK!")
 
         // Load Google Cloud Storage credentials
         val credentials = GoogleCredentials.fromStream(GOTHBUZZ_BUCKET_SA_KEY.byteInputStream())
-            .createScoped(listOf("https://www.googleapis.com/auth/cloud-platform"))
+            .createScoped(listOf("https://www.googleapis.com/auth/cloud-platform"));
 
         // Create Storage client
         val storage = StorageOptions.newBuilder()
@@ -102,7 +105,7 @@ object Glob {
         val variables: Map<String, String> = Gson().fromJson(data, type)
         var ret = ""
 
-        variables.forEach { name, value ->
+        variables.forEach { (name, value) ->
             ret = if ("" == ret) base.replace("{{$name}}", value)
                 else ret.replace("{{$name}}", value)
         }

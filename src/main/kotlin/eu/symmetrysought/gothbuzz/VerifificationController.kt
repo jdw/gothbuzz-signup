@@ -5,6 +5,7 @@ import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Produces
 import io.micronaut.http.MediaType
 import io.micronaut.core.annotation.Introspected
+import io.micronaut.core.annotation.NonNull
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.PathVariable
@@ -18,8 +19,8 @@ class VerifyController {
     private val emailHandler = EmailHandler()
 
 
-    @Get("/verify/{code}")
-    fun verify(@PathVariable("code") code: String): HttpResponse<*> {
+    @Get(value = "/verify/{code}")
+    fun verify(@NonNull code: String): HttpResponse<*> {
         logger.info("Got a visit to /verify/$code...")
         val result = emailHandler.verifyCode(code)
 

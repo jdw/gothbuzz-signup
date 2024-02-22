@@ -17,13 +17,14 @@ class SignupController() {
     @Post("/signup")
     fun signup(@Body inputMessage: InputMessage): HttpResponse<*> {
         logger.info("Got a visit to /signup...")
-        val emailHandler = EmailHandler()
+
         val email = inputMessage.email
-        if (!emailHandler.isValidEmail(email)) {
+        if (!EmailHandler.isValidEmail(email)) {
             val ret = ReturnMessage("Please supply a valid email address!", ReturnCode.BAD_EMAIL)
             return HttpResponse.badRequest(ret).contentType(MediaType.APPLICATION_JSON)
         }
 
+        val emailHandler = EmailHandler()
         if (emailHandler.hasEmail(email)) {
             val ret = ReturnMessage("Your email address has been added previously!", ReturnCode.NOT_NEW_EMAIL)
             return HttpResponse.ok(ret).contentType(MediaType.APPLICATION_JSON)

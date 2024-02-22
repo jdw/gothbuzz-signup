@@ -21,10 +21,7 @@ import java.net.http.HttpResponse
 class EmailHandler() {
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
-    fun isValidEmail(email: String): Boolean {
-        val emailRegex = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\$")
-        return emailRegex.matches(email)
-    }
+
 
     fun hasEmail(email: String): Boolean {
         val blob = Glob.bucket.get("${Glob.GOTHBUZZ_ENVIRONMENT_NAME}/${GATHERED_EMAILS}")!!
@@ -219,5 +216,10 @@ class EmailHandler() {
 
     companion object {
         private val GATHERED_EMAILS = "gathered_emails.json"
+
+        fun isValidEmail(email: String): Boolean {
+            val emailRegex = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\$")
+            return emailRegex.matches(email)
+        }
     }
 }
