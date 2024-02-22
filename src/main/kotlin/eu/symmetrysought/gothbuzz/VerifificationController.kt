@@ -8,7 +8,6 @@ import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.PathVariable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.URI
@@ -22,6 +21,11 @@ class VerifyController {
     @Get(value = "/verify/{code}")
     fun verify(@NonNull code: String): HttpResponse<*> {
         logger.info("Got a visit to /verify/$code...")
+
+        if (!Glob.isValidVerificationCode(code)) {
+            val ret = VerificationFailedReturnMessage("The supplied code is not valid!")
+            return HttpResponse.badRequest(ret).contentType(MediaType.APPLICATION_JSON)
+        }
         val result = emailHandler.verifyCode(code)
 
         return if (result.isSuccess) {
