@@ -22,14 +22,10 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect:${kotlinVersion}")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlinVersion}")
     implementation("com.google.cloud:google-cloud-storage:${googleCloudVersion}")
-    implementation("com.google.cloud:google-cloud-secretmanager:${googleCloudVersion}")
     implementation("com.sendgrid:sendgrid-java:4.10.2")
 
-    compileOnly("io.micronaut:micronaut-http-client-jdk")
     runtimeOnly("ch.qos.logback:logback-classic")
     runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin")
-
-    testImplementation("io.micronaut:micronaut-http-client-jdk")
 }
 
 
