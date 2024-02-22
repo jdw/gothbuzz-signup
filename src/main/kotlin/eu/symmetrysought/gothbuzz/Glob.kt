@@ -27,7 +27,7 @@ object Glob {
     init {
         logger.info("Initializing the almighty Glob...")
         val implementedEnvironmentVariables = setOf("GOTHBUZZ_ENVIRONMENT_NAME", "GOTHBUZZ_BUCKET_NAME", "GOTHBUZZ_BUCKET_SA_KEY", "GOTHBUZZ_SENDGRID_API_KEY", "GOTHBUZZ_NO_REPLY", "GOTHBUZZ_VERIFICATION_CODE_LENGTH")
-        val environmentVariablesErrors: MutableMap<String, MutableList<EnvironmentVariableError>> = implementedEnvironmentVariables.associateWith { mutableListOf<EnvironmentVariableError>() }.toMutableMap()
+        val environmentVariablesErrors: Map<String, MutableList<EnvironmentVariableError>> = implementedEnvironmentVariables.associateWith { mutableListOf<EnvironmentVariableError>() }.toMap()
         val environmentVariableParsers: Map<String, (String) -> Boolean> = mapOf(
             "GOTHBUZZ_ENVIRONMENT_NAME" to { value -> "prod" == value || "local" == value },
             "GOTHBUZZ_SENDGRID_API_KEY" to { value -> value.startsWith("SG.") && 69 == value.length },
@@ -61,16 +61,23 @@ object Glob {
                 name.startsWith("GOTHBUZZ_")
             }.map { (name, value) ->
                 if (!implementedEnvironmentVariables.contains(name)) {
-                    environmentVariablesErrors[name] = mutableListOf()
                     environmentVariablesErrors[name]?.add(EnvironmentVariableError.NOT_CONFIGURED)
-                }
-                if ("" == value) {
-                    environmentVariablesErrors[name]?.add(EnvironmentVariableError.EMPTY)
+
+                    if ("" == value) {
+                        environmentVariablesErrors[name]?.add(EnvironmentVariableError.EMPTY)
+                    }
                 }
         }
 
         // Throws exception (and so exits application) if there are any errors found
-        environmentVariablesErrors.values.filter { it.isNotEmpty() }.takeIf { it.isNotEmpty() }?.let { throw Exception(Gson().toJson(it)) }
+        environmentVariablesErrors.entries.filter { it.value.isNotEmpty() }.takeIf { it.isNotEmpty() }?.let {
+            var msg = ""
+            it.forEach { (name, errors) ->
+                msg += "$name : ${Gson().toJson(errors)}"
+            }
+            logger.warn(msg)
+            throw Exception(msg)
+        }
 
         logger.info("All environment variables configured and found to be OK!")
 
