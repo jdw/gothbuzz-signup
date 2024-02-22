@@ -22,7 +22,8 @@ class IndexController {
 
         val base = IndexController::class.java.getResource("/web/base.html")!!.readText()
         val data = IndexController::class.java.getResource("/web/index.json")!!.readText()
-        val body = Glob.applyTemplate(base, data)
+        val form = IndexController::class.java.getResource("/web/form2.html")!!.readText()
+        val body = Glob.applyTemplate(base, data, form)
         return HttpResponse.ok(body).contentType(MediaType.TEXT_HTML)
     }
 }

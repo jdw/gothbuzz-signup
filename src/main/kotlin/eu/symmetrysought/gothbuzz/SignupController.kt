@@ -15,30 +15,26 @@ class SignupController() {
 
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Post("/signup")
-    fun signup(@Body inputMessage: InputMessage): HttpResponse<*> {
+    fun signup(@Body inputMessage: InputMessage): HttpResponse<String> {
         logger.info("Got a visit to /signup...")
 
         val email = inputMessage.email
         if (!EmailHandler.isValidEmail(email)) {
-            val ret = ReturnMessage("Please supply a valid email address!", ReturnCode.BAD_EMAIL)
-            return HttpResponse.badRequest(ret).contentType(MediaType.APPLICATION_JSON)
+            return HttpResponse.badRequest("Please supply a valid email address!").contentType(MediaType.TEXT_PLAIN)
         }
 
         val emailHandler = EmailHandler()
         if (emailHandler.hasEmail(email)) {
-            val ret = ReturnMessage("Your email address has been added previously!", ReturnCode.NOT_NEW_EMAIL)
-            return HttpResponse.ok(ret).contentType(MediaType.APPLICATION_JSON)
+            return HttpResponse.badRequest("Your email address has been added previously!").contentType(MediaType.TEXT_PLAIN)
         }
 
         val res = emailHandler.sendVerificationEmail(email)
-        logger.info(res.toString())
 
         return if (res.isSuccess) {
             emailHandler.addEmail(email, res.getOrThrow())
-            HttpResponse.redirect<HttpResponse<String>>(URI.create("/signedup")).status(HttpStatus.NO_CONTENT)
+            HttpResponse.ok("OK").contentType(MediaType.TEXT_PLAIN)
         } else {
-            val ret = ReturnMessage("Something went wrong, please try again at a later time!", ReturnCode.MAILSEND_ERROR)
-            HttpResponse.badRequest(ret).contentType(MediaType.APPLICATION_JSON)
+            HttpResponse.badRequest("Something went wrong, please try again at a later time!").contentType(MediaType.TEXT_PLAIN)
         }
     }
 

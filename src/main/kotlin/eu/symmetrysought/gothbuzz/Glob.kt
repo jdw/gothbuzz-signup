@@ -117,14 +117,19 @@ object Glob {
     }
 
 
-    fun applyTemplate(base: String, data: String): String {
+    fun applyTemplate(base: String, data: String, bodyOverride: String = ""): String {
         val type = object : TypeToken<Map<String, String>>() {}.type
         val variables: Map<String, String> = Gson().fromJson(data, type)
         var ret = ""
 
         variables.forEach { (name, value) ->
+            if ("" == value) return@forEach
             ret = if ("" == ret) base.replace("{{$name}}", value)
                 else ret.replace("{{$name}}", value)
+        }
+
+        if ("" != bodyOverride) {
+            ret = ret.replace("{{body}}", bodyOverride)
         }
 
         return ret

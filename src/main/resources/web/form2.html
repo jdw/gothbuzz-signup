@@ -1,0 +1,37 @@
+<div class="container">
+    <form id="signupForm" class="p-4 border rounded-3 bg-body-tertiary">
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" class="form-control" id="email" name="email" required>
+            <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
+        </div>
+        <div class="center-button">
+            <button type="submit" class="btn btn-primary mt-3">sign up</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    $(document).ready(function(){
+      $('#signupForm').submit(function(e){
+        e.preventDefault();
+        var formData = $(this).serialize();
+        $.ajax({
+          url: '/signup',
+          method: 'POST',
+          data: formData,
+          success: function(response){
+            window.location.href = "/signedup";
+          },
+          error: function(xhr, status, error){
+            $("#emailHelp").hide();
+            $('#emailHelp').addClass("text-danger");
+            $('#emailHelp').addClass("invalid-feedback");
+
+            $("#emailHelp").text(xhr.responseText).show();
+            $('#email').addClass('is-invalid');
+          }
+        });
+      });
+    });
+</script>
