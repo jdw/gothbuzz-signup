@@ -136,9 +136,13 @@ object Glob {
         return !code.any { !charPool.contains(it) }
     }
 
-    fun logDebug(logger: Logger, message: String) {
-        if ("prod" != GOTHBUZZ_ENVIRONMENT_NAME)
-            logger.info(message)
+    fun logDebug(logger: Logger, message: String, throwable: Throwable) {
+        if (!listOf("local").contains(GOTHBUZZ_ENVIRONMENT_NAME)) return
+
+        val filename = throwable.stackTrace[0].fileName
+        val lineNumber = throwable.stackTrace[0].lineNumber
+
+        logger.info("($filename:$lineNumber) -> $message")
     }
 
 

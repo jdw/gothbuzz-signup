@@ -27,7 +27,7 @@ class EmailHandler() {
         val blob = Glob.bucket.get("${Glob.GOTHBUZZ_ENVIRONMENT_NAME}/${GATHERED_EMAILS}")!!
         val jsonData = String(blob.getContent()!!)
 
-        Glob.logDebug(logger, "jsonData=$jsonData")
+        Glob.logDebug(logger, "jsonData=$jsonData", Throwable())
         val type = object : TypeToken<Map<String, Signup>>() {}.type
         val signups: Map<String, Signup> = Gson().fromJson(jsonData, type)
 
@@ -42,7 +42,7 @@ class EmailHandler() {
         signups[email] = Signup(email, Status.UNVERIFIED, code)
         val jsonDataOut = Gson().toJson(signups)
 
-        Glob.logDebug(logger, "jsonDataOut=$jsonDataOut")
+        Glob.logDebug(logger, "jsonDataOut=$jsonDataOut", Throwable())
 
         Glob.bucket.create("${Glob.GOTHBUZZ_ENVIRONMENT_NAME}/$GATHERED_EMAILS", jsonDataOut.encodeToByteArray())
     }
@@ -61,7 +61,7 @@ class EmailHandler() {
                 signups[signup.email] = signup
                 val jsonDataOut = Gson().toJson(signups)
 
-                Glob.logDebug(logger, "jsonDataOut=$jsonDataOut")
+                Glob.logDebug(logger, "jsonDataOut=$jsonDataOut", Throwable())
 
                 Glob.bucket.create("${Glob.GOTHBUZZ_ENVIRONMENT_NAME}/$GATHERED_EMAILS", jsonDataOut.encodeToByteArray())
 

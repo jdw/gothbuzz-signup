@@ -59,7 +59,10 @@ class NotificationHandler private constructor() {
     @Throws(IOException::class, InterruptedException::class, ExecutionException::class)
     private fun workflowsExecution(workflowId: String, fields: Map<String, String>) {
         //https://cloud.google.com/workflows/docs/executing-workflow#client-libraries
+
         val body = Gson().toJson(fields)
+
+        Glob.logDebug(logger, "$workflowId: body=$body", Throwable())
         ExecutionsClient.create(executionSettings).use { executionsClient ->
             // Construct the fully qualified location path.
             val parent: WorkflowName = WorkflowName.of(Glob.GOTHBUZZ_PROJECT_ID, Glob.GOTHBUZZ_GOOGLE_LOCATION_ID, workflowId)
