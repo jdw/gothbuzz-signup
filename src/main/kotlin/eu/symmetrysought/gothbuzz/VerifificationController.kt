@@ -6,6 +6,7 @@ import io.micronaut.http.annotation.Produces
 import io.micronaut.http.MediaType
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import org.slf4j.Logger
@@ -19,10 +20,11 @@ class VerifyController {
 
 
     @Get(value = "/verify/{code}")
-    fun verify(@NonNull code: String): HttpResponse<*> {
+    fun verify(@NonNull code: String, request: HttpRequest<*>): HttpResponse<*> {
         logger.info("Got a visit to /verify/$code...")
 
         if (!Glob.isValidVerificationCode(code)) {
+            Glob.notifications.sendError("""${request.remoteAddress.address} tried code "$code" which was invalid!""")
             val ret = VerificationFailedReturnMessage("The supplied code is not valid!")
             return HttpResponse.badRequest(ret).contentType(MediaType.APPLICATION_JSON)
         }

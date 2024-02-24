@@ -3,6 +3,7 @@ package eu.symmetrysought.gothbuzz
 import com.google.api.gax.core.FixedCredentialsProvider
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.cloud.workflows.executions.v1.*
+import com.google.gson.Gson
 import com.sun.nio.sctp.NotificationHandler
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -17,7 +18,7 @@ class NotificationHandler private constructor(private val channelToWorkflowId: M
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
     private val credentials: GoogleCredentials
-        get() = GoogleCredentials.fromStream(System.getenv(Glob.GOTHBUZZ_WORKFLOW_EXEC).byteInputStream())
+        get() = GoogleCredentials.fromStream(Glob.GOTHBUZZ_WORKFLOW_EXEC.byteInputStream())
                 .createScoped(listOf("https://www.googleapis.com/auth/cloud-platform"))
 
     private val executionSettings: ExecutionsSettings
@@ -25,17 +26,7 @@ class NotificationHandler private constructor(private val channelToWorkflowId: M
                 .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
                 .build()
     enum class NotificationChannel {
-        RELEASES, ANNOUNCEMENTS, ERRORS, BUZZ
-    }
-
-    fun sendRelease(message: String) {
-        if (!channelToWorkflowId.containsKey(NotificationChannel.RELEASES)) {
-            logger.warn("Trying to send to releases without workflow set!")
-            return
-        }
-        channelToWorkflowId[NotificationChannel.RELEASES]?.let {
-            workflowsExecution(it, message)
-        }
+        ANNOUNCEMENTS, ERRORS, BUZZ
     }
 
 
@@ -85,9 +76,14 @@ class NotificationHandler private constructor(private val channelToWorkflowId: M
 
     @Throws(IOException::class, InterruptedException::class, ExecutionException::class)
     private fun workflowsExecution(workflowId: String, payload: String) {
-        val logger: Logger = LoggerFactory.getLogger(NotificationHandler::class.java)
         //https://cloud.google.com/workflows/docs/executing-workflow#client-libraries
 
+        val jsonData = try {
+            Gson().toJson(listOf(payload))
+        }
+        catch (_: Exception) {
+            payload
+        }
         ExecutionsClient.create(executionSettings).use { executionsClient ->
             // Construct the fully qualified location path.
             val parent: WorkflowName = WorkflowName.of(Glob.GOTHBUZZ_PROJECT_ID, Glob.GOTHBUZZ_GOOGLE_LOCATION_ID, workflowId)
@@ -97,7 +93,7 @@ class NotificationHandler private constructor(private val channelToWorkflowId: M
                 .setParent(parent.toString())
                 .setExecution(Execution
                     .newBuilder()
-                    .setArgument(payload)
+                    .setArgument(jsonData)
                     .build())
                 .build()
             executionsClient.createExecution(request)

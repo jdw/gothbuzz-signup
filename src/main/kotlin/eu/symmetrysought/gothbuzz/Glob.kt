@@ -27,15 +27,13 @@ object Glob {
     private val GOTHBUZZ_ERRORS_WORKFLOW: String by environmentVariablesValue
     private val GOTHBUZZ_ANNOUNCEMENTS_WORKFLOW: String by environmentVariablesValue
     private val GOTHBUZZ_BUZZ_WORKFLOW: String by environmentVariablesValue
-    private val GOTHBUZZ_RELEASES_WORKFLOW: String by environmentVariablesValue
-
 
     enum class EnvironmentVariableError() {
         NOT_SET, EMPTY, PARSER_FAILED, NOT_CONFIGURED
     }
     init {
         logger.info("Initializing the almighty Glob...")
-        val implementedEnvironmentVariables = setOf("GOTHBUZZ_RELEASES_WORKFLOW", "GOTHBUZZ_BUZZ_WORKFLOW", "GOTHBUZZ_ANNOUNCEMENTS_WORKFLOW", "GOTHBUZZ_ERRORS_WORKFLOW", "GOTHBUZZ_WORKFLOW_EXEC", "GOTHBUZZ_PROJECT_ID", "GOTHBUZZ_GOOGLE_LOCATION_ID", "GOTHBUZZ_ENVIRONMENT_NAME", "GOTHBUZZ_BUCKET_NAME", "GOTHBUZZ_BUCKET_SA_KEY", "GOTHBUZZ_SENDGRID_API_KEY", "GOTHBUZZ_NO_REPLY", "GOTHBUZZ_VERIFICATION_CODE_LENGTH")
+        val implementedEnvironmentVariables = setOf("GOTHBUZZ_BUZZ_WORKFLOW", "GOTHBUZZ_ANNOUNCEMENTS_WORKFLOW", "GOTHBUZZ_ERRORS_WORKFLOW", "GOTHBUZZ_WORKFLOW_EXEC", "GOTHBUZZ_PROJECT_ID", "GOTHBUZZ_GOOGLE_LOCATION_ID", "GOTHBUZZ_ENVIRONMENT_NAME", "GOTHBUZZ_BUCKET_NAME", "GOTHBUZZ_BUCKET_SA_KEY", "GOTHBUZZ_SENDGRID_API_KEY", "GOTHBUZZ_NO_REPLY", "GOTHBUZZ_VERIFICATION_CODE_LENGTH")
         val environmentVariablesErrors: MutableMap<String, MutableList<EnvironmentVariableError>> = implementedEnvironmentVariables.associateWith { mutableListOf<EnvironmentVariableError>() }.toMutableMap()
         val environmentVariableParsers: Map<String, (String) -> Boolean> = mapOf(
             "GOTHBUZZ_ENVIRONMENT_NAME" to { value -> "prod" == value || "local" == value },
@@ -117,7 +115,6 @@ object Glob {
             notifications = NotificationHandler.newBuilder()
                 .setChannelWorkflowId(NotificationHandler.NotificationChannel.ERRORS, GOTHBUZZ_ERRORS_WORKFLOW)
                 .setChannelWorkflowId(NotificationHandler.NotificationChannel.ANNOUNCEMENTS, GOTHBUZZ_ANNOUNCEMENTS_WORKFLOW)
-                .setChannelWorkflowId(NotificationHandler.NotificationChannel.RELEASES, GOTHBUZZ_RELEASES_WORKFLOW)
                 .setChannelWorkflowId(NotificationHandler.NotificationChannel.BUZZ, GOTHBUZZ_BUZZ_WORKFLOW)
                 .build()
         }
