@@ -20,21 +20,22 @@ object Glob {
     private val GOTHBUZZ_BUCKET_SA_KEY: String by environmentVariablesValue
     val GOTHBUZZ_NO_REPLY: String by environmentVariablesValue
     private val GOTHBUZZ_VERIFICATION_CODE_LENGTH: String by environmentVariablesValue
+    val GOTHBUZZ_GOOGLE_LOCATION_ID: String by environmentVariablesValue
+    val GOTHBUZZ_PROJECT_ID: String by environmentVariablesValue
+    val GOTHBUZZ_WORKFLOW_EXEC: String by environmentVariablesValue
 
     enum class EnvironmentVariableError() {
         NOT_SET, EMPTY, PARSER_FAILED, NOT_CONFIGURED
     }
     init {
         logger.info("Initializing the almighty Glob...")
-        val implementedEnvironmentVariables = setOf("GOTHBUZZ_ENVIRONMENT_NAME", "GOTHBUZZ_BUCKET_NAME", "GOTHBUZZ_BUCKET_SA_KEY", "GOTHBUZZ_SENDGRID_API_KEY", "GOTHBUZZ_NO_REPLY", "GOTHBUZZ_VERIFICATION_CODE_LENGTH")
-        val environmentVariablesErrors: Map<String, MutableList<EnvironmentVariableError>> = implementedEnvironmentVariables.associateWith { mutableListOf<EnvironmentVariableError>() }.toMap()
+        val implementedEnvironmentVariables = setOf("GOTHBUZZ_WORKFLOW_EXEC", "GOTHBUZZ_PROJECT_ID", "GOTHBUZZ_GOOGLE_LOCATION_ID", "GOTHBUZZ_ENVIRONMENT_NAME", "GOTHBUZZ_BUCKET_NAME", "GOTHBUZZ_BUCKET_SA_KEY", "GOTHBUZZ_SENDGRID_API_KEY", "GOTHBUZZ_NO_REPLY", "GOTHBUZZ_VERIFICATION_CODE_LENGTH")
+        val environmentVariablesErrors: MutableMap<String, MutableList<EnvironmentVariableError>> = implementedEnvironmentVariables.associateWith { mutableListOf<EnvironmentVariableError>() }.toMutableMap()
         val environmentVariableParsers: Map<String, (String) -> Boolean> = mapOf(
             "GOTHBUZZ_ENVIRONMENT_NAME" to { value -> "prod" == value || "local" == value },
             "GOTHBUZZ_SENDGRID_API_KEY" to { value -> value.startsWith("SG.") && 69 == value.length },
-            "GOTHBUZZ_BUCKET_SA_KEY" to { value -> try { GoogleCredentials.fromStream(value.byteInputStream())
-                .createScoped(listOf("https://www.googleapis.com/auth/cloud-platform")); true } catch (_: Exception) { false}},
             "GOTHBUZZ_NO_REPLY" to { value -> EmailHandler.isValidEmail(value) },
-            "GOTHBUZZ_VERIFICATION_CODE_LENGTH" to { value -> try {value.toInt(); true} catch(_: Exception) { false } }
+            "GOTHBUZZ_VERIFICATION_CODE_LENGTH" to { value -> try { value.toInt(); true} catch(_: Exception) { false } }
         )
 
         implementedEnvironmentVariables.forEach { name ->
@@ -61,6 +62,7 @@ object Glob {
                 name.startsWith("GOTHBUZZ_")
             }.map { (name, value) ->
                 if (!implementedEnvironmentVariables.contains(name)) {
+                    environmentVariablesErrors[name] = mutableListOf()
                     environmentVariablesErrors[name]?.add(EnvironmentVariableError.NOT_CONFIGURED)
 
                     if ("" == value) {
@@ -72,25 +74,39 @@ object Glob {
         // Throws exception (and so exits application) if there are any errors found
         environmentVariablesErrors.entries.filter { it.value.isNotEmpty() }.takeIf { it.isNotEmpty() }?.let {
             var msg = ""
-            it.forEach { (name, errors) ->
-                msg += "$name : ${Gson().toJson(errors)}"
-            }
-            logger.warn(msg)
-            throw Exception(msg)
+            it.forEach { (name, errors) -> msg +=  "$name : $errors" }
+            throw ExceptionInInitializerError(msg)
         }
 
         logger.info("All environment variables configured and found to be OK!")
 
         // Load Google Cloud Storage credentials
-        val credentials = GoogleCredentials.fromStream(GOTHBUZZ_BUCKET_SA_KEY.byteInputStream())
-            .createScoped(listOf("https://www.googleapis.com/auth/cloud-platform"));
+        val credentials =  try {
+            GoogleCredentials.fromStream(GOTHBUZZ_BUCKET_SA_KEY.byteInputStream())
+                .createScoped(listOf("https://www.googleapis.com/auth/cloud-platform"));
+        }
+        catch (_: Exception) {
+            throw ExceptionInInitializerError("Failed getting Google credentials with GOTHBUZZ_BUCKET_SA_KEY!")
+        }
 
         // Create Storage client
-        val storage = StorageOptions.newBuilder()
-            .setCredentials(credentials)
-            .build()
-            .service
-        bucket = storage.get(GOTHBUZZ_BUCKET_NAME)
+        val storage = try {
+            StorageOptions.newBuilder()
+                .setCredentials(credentials)
+                .build()
+                .service
+        }
+        catch (_: Exception) {
+            throw ExceptionInInitializerError("Failed getting storage!")
+        }
+
+        try {
+            bucket = storage.get(GOTHBUZZ_BUCKET_NAME)
+        }
+        catch (_: Exception) {
+            throw ExceptionInInitializerError("Could not get bucket with GOTHBUZZ_BUCKET_NAME!")
+        }
+
         logger.info("Glob initialized OK...")
     }
 

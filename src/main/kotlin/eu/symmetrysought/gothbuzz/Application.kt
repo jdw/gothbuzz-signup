@@ -1,7 +1,5 @@
 package eu.symmetrysought.gothbuzz
 
-import com.google.gson.JsonObject
-import com.google.gson.Gson
 import io.micronaut.context.event.ApplicationEventListener
 import io.micronaut.context.event.StartupEvent
 import io.micronaut.runtime.Micronaut.run
@@ -17,7 +15,14 @@ class CheckEnvironmentAndConfiguration : ApplicationEventListener<StartupEvent> 
 	override fun onApplicationEvent(event: StartupEvent) {
 		logger.info("Checking if environment is OK...")
 
-		Glob
+		try {
+			Glob
+		}
+		catch (e: ExceptionInInitializerError) {
+			logger.warn("Exception caught while initializing Glob!")
+			NotificationHandler.notifyInitializationError(e)
+			throw e
+		}
 		logger.info("Environment was found to be OK!")
 	}
 }

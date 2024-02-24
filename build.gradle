@@ -7,7 +7,7 @@ plugins {
     id("io.micronaut.aot") version "4.3.2"
 }
 
-version = "0.3.0"
+version = "0.4.0"
 group = "eu.symmetrysought.gothbuzz"
 
 repositories {
@@ -23,6 +23,10 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlinVersion}")
     implementation("com.google.cloud:google-cloud-storage:${googleCloudVersion}")
     implementation("com.sendgrid:sendgrid-java:4.10.2")
+    implementation("io.micronaut.gcp:micronaut-gcp-common")
+
+    implementation("com.google.cloud:google-cloud-workflows:2.36.0")
+    implementation("com.google.cloud:google-cloud-workflow-executions:2.36.0")
 
     runtimeOnly("ch.qos.logback:logback-classic")
     runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin")
