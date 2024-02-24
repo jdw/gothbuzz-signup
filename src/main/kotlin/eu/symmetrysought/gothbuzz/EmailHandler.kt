@@ -24,7 +24,7 @@ class EmailHandler() {
 
 
     fun hasEmail(email: String): Boolean {
-        val blob = Glob.bucket.get("${Glob.GOTHBUZZ_ENVIRONMENT_NAME}/${GATHERED_EMAILS}")!!
+        val blob = Glob.bucket.get("${Glob.envvar.GOTHBUZZ_ENVIRONMENT_NAME}/${GATHERED_EMAILS}")!!
         val jsonData = String(blob.getContent()!!)
 
         Glob.logDebug(logger, "jsonData=$jsonData", Throwable())
@@ -35,7 +35,7 @@ class EmailHandler() {
     }
 
     fun addEmail(email: String, code: String) {
-        val blob = Glob.bucket.get("${Glob.GOTHBUZZ_ENVIRONMENT_NAME}/${GATHERED_EMAILS}")!!
+        val blob = Glob.bucket.get("${Glob.envvar.GOTHBUZZ_ENVIRONMENT_NAME}/${GATHERED_EMAILS}")!!
         val jsonDataIn = String(blob.getContent()!!)
         val type = object : TypeToken<MutableMap<String, Signup>>() {}.type
         val signups: MutableMap<String, Signup> = Gson().fromJson(jsonDataIn, type)
@@ -44,11 +44,11 @@ class EmailHandler() {
 
         Glob.logDebug(logger, "jsonDataOut=$jsonDataOut", Throwable())
 
-        Glob.bucket.create("${Glob.GOTHBUZZ_ENVIRONMENT_NAME}/$GATHERED_EMAILS", jsonDataOut.encodeToByteArray())
+        Glob.bucket.create("${Glob.envvar.GOTHBUZZ_ENVIRONMENT_NAME}/$GATHERED_EMAILS", jsonDataOut.encodeToByteArray())
     }
 
     fun verifyCode(code: String): Result<String> {
-        val blob = Glob.bucket.get("${Glob.GOTHBUZZ_ENVIRONMENT_NAME}/${GATHERED_EMAILS}")!!
+        val blob = Glob.bucket.get("${Glob.envvar.GOTHBUZZ_ENVIRONMENT_NAME}/${GATHERED_EMAILS}")!!
         val jsonDataIn = String(blob.getContent()!!)
         val type = object : TypeToken<MutableMap<String, Signup>>() {}.type
         val signups: MutableMap<String, Signup> = Gson().fromJson(jsonDataIn, type)
@@ -63,7 +63,7 @@ class EmailHandler() {
 
                 Glob.logDebug(logger, "jsonDataOut=$jsonDataOut", Throwable())
 
-                Glob.bucket.create("${Glob.GOTHBUZZ_ENVIRONMENT_NAME}/$GATHERED_EMAILS", jsonDataOut.encodeToByteArray())
+                Glob.bucket.create("${Glob.envvar.GOTHBUZZ_ENVIRONMENT_NAME}/$GATHERED_EMAILS", jsonDataOut.encodeToByteArray())
 
                 Result.success(signup.email)
             }
@@ -74,7 +74,7 @@ class EmailHandler() {
     }
     fun sendGridDynamicTemplate(toAddress: String): Result<String> {
         val code = Glob.generateRandomString()
-        val from = Email(Glob.GOTHBUZZ_NO_REPLY)
+        val from = Email(Glob.envvar.GOTHBUZZ_NO_REPLY)
         from.name = "goth buzz"
         val subject = "goth.buzz verification email!"
         val to = Email(toAddress)
@@ -82,7 +82,7 @@ class EmailHandler() {
         val mail = Mail(from, subject, to, content)
         mail.personalization.get(0).addSubstitution("code", code);
 
-        val sg = SendGrid(Glob.GOTHBUZZ_SENDGRID_API_KEY)
+        val sg = SendGrid(Glob.envvar.GOTHBUZZ_SENDGRID_API_KEY)
         val request = Request()
 
         return try {
@@ -107,14 +107,14 @@ class EmailHandler() {
     fun sendVerificationEmail(toAddress: String): Result<String> {
         logger.info("Entered sendVerificationEmail... ")
         val code = Glob.generateRandomString()
-        val from = Email(Glob.GOTHBUZZ_NO_REPLY)
+        val from = Email(Glob.envvar.GOTHBUZZ_NO_REPLY)
         from.name = "goth buzz"
         val subject = "goth.buzz verification email!"
         val to = Email(toAddress)
         val content = Content("text/html", EmailHandler::class.java.getResource("/web/verify_email.html")!!.readText().replace("{{code}}", code))
         val mail = Mail(from, subject, to, content)
 
-        val sg = SendGrid(Glob.GOTHBUZZ_SENDGRID_API_KEY)
+        val sg = SendGrid(Glob.envvar.GOTHBUZZ_SENDGRID_API_KEY)
         val request = Request()
         return try {
             request.method = Method.POST
@@ -143,13 +143,13 @@ class EmailHandler() {
         val uri: URI = UriBuilder.of("https://api.mailersend.com/v1/email")
             .build()
         val code = Glob.generateRandomString()
-        val link = if ("local" == Glob.GOTHBUZZ_ENVIRONMENT_NAME) "localhost:8080/verify/code=$code"
+        val link = if ("local" == Glob.envvar.GOTHBUZZ_ENVIRONMENT_NAME) "localhost:8080/verify/code=$code"
             else "goth.buzz/verify/code=$code"
 
         val body = """{
             "subject": "Welcome to goth.buzz - Please verify your email!",
     "from": {
-        "email": "${Glob.GOTHBUZZ_NO_REPLY}",
+        "email": "${Glob.envvar.GOTHBUZZ_NO_REPLY}",
         "name": "goth buzz"
     },
     "to": [
@@ -172,7 +172,7 @@ class EmailHandler() {
 
         val body2 = """{
     "from": {
-      "email": "${Glob.GOTHBUZZ_NO_REPLY}",
+      "email": "${Glob.envvar.GOTHBUZZ_NO_REPLY}",
       "name": "goth buzz"
     },
     "to": [

@@ -18,7 +18,7 @@ class NotificationHandler private constructor() {
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
     private val credentials: GoogleCredentials
-        get() = GoogleCredentials.fromStream(Glob.GOTHBUZZ_WORKFLOW_EXEC.byteInputStream())
+        get() = GoogleCredentials.fromStream(Glob.envvar.GOTHBUZZ_WORKFLOW_EXEC.byteInputStream())
                 .createScoped(listOf("https://www.googleapis.com/auth/cloud-platform"))
 
     private val executionSettings: ExecutionsSettings
@@ -31,17 +31,17 @@ class NotificationHandler private constructor() {
 
 
     fun propagateAnnouncement(message: String) {
-        workflowsExecution(Glob.GOTHBUZZ_PROPAGATOR, mapOf("message" to message, "channel" to NotificationChannel.ANNOUNCEMENTS.name.lowercase()))
+        workflowsExecution(Glob.envvar.GOTHBUZZ_PROPAGATOR, mapOf("message" to message, "channel" to NotificationChannel.ANNOUNCEMENTS.name.lowercase()))
     }
 
 
     fun propagateBuzz(message: String) {
-        workflowsExecution(Glob.GOTHBUZZ_PROPAGATOR, mapOf("message" to message, "channel" to NotificationChannel.BUZZ.name.lowercase()))
+        workflowsExecution(Glob.envvar.GOTHBUZZ_PROPAGATOR, mapOf("message" to message, "channel" to NotificationChannel.BUZZ.name.lowercase()))
     }
 
 
     fun propagateError(message: String) {
-        workflowsExecution(Glob.GOTHBUZZ_PROPAGATOR, mapOf("message" to message, "channel" to NotificationChannel.ERRORS.name.lowercase()))
+        workflowsExecution(Glob.envvar.GOTHBUZZ_PROPAGATOR, mapOf("message" to message, "channel" to NotificationChannel.ERRORS.name.lowercase()))
     }
 
 
@@ -61,7 +61,7 @@ class NotificationHandler private constructor() {
         //https://cloud.google.com/workflows/docs/executing-workflow#client-libraries
         ExecutionsClient.create(executionSettings).use { executionsClient ->
             // Construct the fully qualified location path.
-            val parent: WorkflowName = WorkflowName.of(Glob.GOTHBUZZ_PROJECT_ID, Glob.GOTHBUZZ_GOOGLE_LOCATION_ID, workflowId)
+            val parent: WorkflowName = WorkflowName.of(Glob.envvar.GOTHBUZZ_PROJECT_ID, Glob.envvar.GOTHBUZZ_GOOGLE_LOCATION_ID, workflowId)
             val body = Gson().toJson(fields)
             Glob.logDebug(logger, "$workflowId: body=$body", Throwable())
             val request: CreateExecutionRequest = CreateExecutionRequest.newBuilder()
@@ -119,9 +119,9 @@ class NotificationHandler private constructor() {
             val function = e.stackTrace.get(0).methodName
             val content = """$classname.$function threw message "$message" in $filename:$lineNumber"""
 
-            logger.warn(content)
-
             if ("local" == env) {
+                //TODO Make crash if called to soon Glob.logDebug(logger, content, e)
+                Glob.logDebug(logger, content, e)
                 return
             }
 
