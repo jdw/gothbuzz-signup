@@ -121,18 +121,22 @@ class EmailHandler() {
             request.endpoint = "mail/send"
             request.body = mail.build()
             val response = sg.api(request)
-            if (response.statusCode.toString().startsWith("2")) {
+            val statusCode = response.statusCode
+            if (statusCode.toString().startsWith("2")) {
                 logger.info(response.statusCode.toString())
                 logger.info(response.body)
                 logger.info(response.headers.toString())
 
+                Glob.notifications.propagateAnnouncement("Sent verification code $code to $toAddress")
                 Result.success(code)
             }
             else {
-                Result.failure(Exception("Sending email failed! Status code ${response.statusCode}"))
+                Glob.notifications.propagateError("Failed sending verification email to $toAddress, status code $statusCode")
+                Result.failure(Exception("Sending email failed! Status code $statusCode"))
             }
-        } catch (ex: IOException) {
-            Result.failure(Exception(ex.message))
+        } catch (e: IOException) {
+            Glob.notifications.propagateError(e)
+            Result.failure(Exception(e.message))
         }
     }
     fun sendVerificationEmailMailerSendSux(email: String): Result<String> {

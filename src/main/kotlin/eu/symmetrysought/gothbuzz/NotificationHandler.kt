@@ -14,7 +14,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.util.concurrent.ExecutionException
 
-class NotificationHandler private constructor(private val channelToWorkflowId: Map<NotificationChannel, String>) {
+class NotificationHandler private constructor() {
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
     private val credentials: GoogleCredentials
@@ -30,60 +30,36 @@ class NotificationHandler private constructor(private val channelToWorkflowId: M
     }
 
 
-    fun sendAnnouncement(message: String) {
-        if (!channelToWorkflowId.containsKey(NotificationChannel.ANNOUNCEMENTS)) {
-            logger.warn("Trying to send announcement without workflow set!")
-            return
-        }
-        channelToWorkflowId[NotificationChannel.ANNOUNCEMENTS]?.let {
-            workflowsExecution(it, message)
-        }
+    fun propagateAnnouncement(message: String) {
+        workflowsExecution(Glob.GOTHBUZZ_PROPAGATOR, mapOf("message" to message, "channel" to NotificationChannel.ANNOUNCEMENTS.name.lowercase()))
     }
 
 
-    fun sendBuzz(message: String) {
-        if (!channelToWorkflowId.containsKey(NotificationChannel.BUZZ)) {
-            logger.warn("Trying to send buzz without workflow set!")
-            return
-        }
-        channelToWorkflowId[NotificationChannel.BUZZ]?.let {
-            workflowsExecution(it, message)
-        }
+    fun propagateBuzz(message: String) {
+        workflowsExecution(Glob.GOTHBUZZ_PROPAGATOR, mapOf("message" to message, "channel" to NotificationChannel.BUZZ.name.lowercase()))
     }
 
 
-    fun sendError(message: String) {
-        if (!channelToWorkflowId.containsKey(NotificationChannel.ERRORS)) {
-            logger.warn("Trying to send error without workflow set!")
-            return
-        }
-        channelToWorkflowId[NotificationChannel.ERRORS]?.let {
-            workflowsExecution(it, message)
-        }
+    fun propagateError(message: String) {
+        workflowsExecution(Glob.GOTHBUZZ_PROPAGATOR, mapOf("message" to message, "channel" to NotificationChannel.ERRORS.name.lowercase()))
     }
 
 
-    fun sendError(e: Exception) {
-        val message = e.message
-        val lineNumber = e.stackTrace.get(0).lineNumber.toString()
-        val classname = e.stackTrace.get(0).className.toString()
-        val filename = e.stackTrace.get(0).fileName
-        val function = e.stackTrace.get(0).methodName
+    fun propagateError(t: Throwable) {
+        val message = t.message
+        val lineNumber = t.stackTrace.get(0).lineNumber.toString()
+        val classname = t.stackTrace.get(0).className.toString()
+        val filename = t.stackTrace.get(0).fileName
+        val function = t.stackTrace.get(0).methodName
 
-        sendError("""$classname.$function threw message "$message" in $filename:$lineNumber""")
+        propagateError("""$classname.$function threw message "$message" in $filename:$lineNumber""")
     }
 
 
     @Throws(IOException::class, InterruptedException::class, ExecutionException::class)
-    private fun workflowsExecution(workflowId: String, payload: String) {
+    private fun workflowsExecution(workflowId: String, fields: Map<String, String>) {
         //https://cloud.google.com/workflows/docs/executing-workflow#client-libraries
-
-        val jsonData = try {
-            Gson().toJson(listOf(payload))
-        }
-        catch (_: Exception) {
-            payload
-        }
+        val body = Gson().toJson(fields)
         ExecutionsClient.create(executionSettings).use { executionsClient ->
             // Construct the fully qualified location path.
             val parent: WorkflowName = WorkflowName.of(Glob.GOTHBUZZ_PROJECT_ID, Glob.GOTHBUZZ_GOOGLE_LOCATION_ID, workflowId)
@@ -93,11 +69,11 @@ class NotificationHandler private constructor(private val channelToWorkflowId: M
                 .setParent(parent.toString())
                 .setExecution(Execution
                     .newBuilder()
-                    .setArgument(jsonData)
+                    .setArgument(body)
                     .build())
                 .build()
             executionsClient.createExecution(request)
-            /*
+
             val response: Execution = executionsClient.createExecution(request)
             val executionName: String = response.getName()
             logger.info("Created execution: $executionName")
@@ -123,8 +99,6 @@ class NotificationHandler private constructor(private val channelToWorkflowId: M
                     logger.info("Execution results: ${execution.getResult()}")
                 }
             }
-
-             */
         }
     }
     companion object {
@@ -171,11 +145,7 @@ class NotificationHandler private constructor(private val channelToWorkflowId: M
         }
     }
 
-    data class Builder(private val channelToWorkflowId: MutableMap<NotificationChannel, String> = mutableMapOf()) {
-        fun build() = NotificationHandler(channelToWorkflowId)
-        fun setChannelWorkflowId(channel: NotificationChannel, workflowId: String): Builder {
-            channelToWorkflowId[channel] = workflowId
-            return this
-        }
+    class Builder {
+        fun build() = NotificationHandler()
     }
 }
