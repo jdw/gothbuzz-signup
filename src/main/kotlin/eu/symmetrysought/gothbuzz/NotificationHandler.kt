@@ -59,15 +59,11 @@ class NotificationHandler private constructor() {
     @Throws(IOException::class, InterruptedException::class, ExecutionException::class)
     private fun workflowsExecution(workflowId: String, fields: Map<String, String>) {
         //https://cloud.google.com/workflows/docs/executing-workflow#client-libraries
-
-        val body = Gson().toJson(fields)
-
-        Glob.logDebug(logger, "$workflowId: body=$body", Throwable())
         ExecutionsClient.create(executionSettings).use { executionsClient ->
             // Construct the fully qualified location path.
             val parent: WorkflowName = WorkflowName.of(Glob.GOTHBUZZ_PROJECT_ID, Glob.GOTHBUZZ_GOOGLE_LOCATION_ID, workflowId)
-
-            // Creates the execution object.
+            val body = Gson().toJson(fields)
+            Glob.logDebug(logger, "$workflowId: body=$body", Throwable())
             val request: CreateExecutionRequest = CreateExecutionRequest.newBuilder()
                 .setParent(parent.toString())
                 .setExecution(Execution
@@ -75,17 +71,14 @@ class NotificationHandler private constructor() {
                     .setArgument(body)
                     .build())
                 .build()
-            executionsClient.createExecution(request)
 
             val response: Execution = executionsClient.createExecution(request)
             val executionName: String = response.getName()
-            logger.info("Created execution: $executionName")
             var backoffTime: Long = 0
             var backoffDelay: Long = 1000 // Start wait with delay of 1,000 ms
             val backoffTimeout = (10 * 60 * 1000).toLong() // Time out at 10 minutes
 
             // Wait for execution to finish, then print results.
-            logger.info("Poll for results...")
             var finished = false
             while (!finished && backoffTime < backoffTimeout) {
                 val execution: Execution = executionsClient.getExecution(executionName)
@@ -93,13 +86,20 @@ class NotificationHandler private constructor() {
 
                 // If we haven't seen the results yet, wait.
                 if (!finished) {
-                    logger.info("- Waiting for results")
                     Thread.sleep(backoffDelay)
                     backoffTime += backoffDelay
                     backoffDelay *= 2 // Double the delay to provide exponential backoff.
                 } else {
-                    logger.info("Execution finished with state: ${execution.getState().name}")
-                    logger.info("Execution results: ${execution.getResult()}")
+                    val stateName = execution.getState().name
+                    val executionResult = execution.result
+                    Glob.logDebug(logger, "executionName=$executionName", Throwable())
+                    Glob.logDebug(logger, "stateName=$stateName", Throwable())
+                    Glob.logDebug(logger, "executionResult=$executionResult", Throwable())
+                    if ("SUCCEEDED" != stateName) {
+                        // TODO send to prod-errors webhook
+                        logger.warn("Execution finished with state: $stateName")
+                        logger.warn("Execution results: $executionResult")
+                    }
                 }
             }
         }
