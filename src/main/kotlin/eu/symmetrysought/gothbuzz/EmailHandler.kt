@@ -16,11 +16,13 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 
 class EmailHandler() {
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
-
+    private val GATHERED_EMAILS = "gathered_emails.json"
 
 
     fun hasEmail(email: String): Boolean {
@@ -30,6 +32,7 @@ class EmailHandler() {
         Glob.logDebug(logger, "jsonData=$jsonData", Throwable())
         val type = object : TypeToken<Map<String, Signup>>() {}.type
         val signups: Map<String, Signup> = Gson().fromJson(jsonData, type)
+        makeBackup()
 
         return signups.containsKey(email)
     }
@@ -45,7 +48,18 @@ class EmailHandler() {
         Glob.logDebug(logger, "jsonDataOut=$jsonDataOut", Throwable())
 
         Glob.bucket.create("${Glob.envvar.GOTHBUZZ_ENVIRONMENT_NAME}/$GATHERED_EMAILS", jsonDataOut.encodeToByteArray())
+        makeBackup()
     }
+
+
+    private fun makeBackup() {
+        val currentDate = LocalDate.now()
+        val formattedDate = currentDate.format(DateTimeFormatter.ISO_DATE)
+
+        val blob = Glob.bucket.get("${Glob.envvar.GOTHBUZZ_ENVIRONMENT_NAME}/${GATHERED_EMAILS}")!!
+        Glob.bucket.create("${Glob.envvar.GOTHBUZZ_ENVIRONMENT_NAME}/$formattedDate-$GATHERED_EMAILS", blob.getContent())
+    }
+
 
     fun verifyCode(code: String): Result<String> {
         val blob = Glob.bucket.get("${Glob.envvar.GOTHBUZZ_ENVIRONMENT_NAME}/${GATHERED_EMAILS}")!!
@@ -65,12 +79,11 @@ class EmailHandler() {
 
                 Glob.bucket.create("${Glob.envvar.GOTHBUZZ_ENVIRONMENT_NAME}/$GATHERED_EMAILS", jsonDataOut.encodeToByteArray())
 
+                makeBackup()
                 Result.success(signup.email)
             }
             else -> Result.failure(Exception("More then one email address with the given code was found!"))
         }
-
-
     }
     fun sendGridDynamicTemplate(toAddress: String): Result<String> {
         val code = Glob.generateRandomString()
@@ -105,6 +118,7 @@ class EmailHandler() {
         }
     }
     fun sendVerificationEmail(toAddress: String): Result<String> {
+        //TODO SIC postmarkapp.com
         logger.info("Entered sendVerificationEmail... ")
         val code = Glob.generateRandomString()
         val from = Email(Glob.envvar.GOTHBUZZ_NO_REPLY)
@@ -219,8 +233,6 @@ class EmailHandler() {
 
 
     companion object {
-        private val GATHERED_EMAILS = "gathered_emails.json"
-
         fun isValidEmail(email: String): Boolean {
             val emailRegex = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\$")
             return emailRegex.matches(email)

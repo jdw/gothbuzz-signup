@@ -8,6 +8,8 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import kotlin.random.Random
 
 object Glob {
@@ -60,7 +62,9 @@ object Glob {
         }
 
         try {
-            notifications = NotificationHandler.newBuilder().build()
+            notifications = NotificationHandler.newBuilder()
+                .addCredentials(envvar.GOTHBUZZ_WORKFLOW_EXEC)
+                .build()
         }
         catch (_: Exception) {
             throw ExceptionInInitializerError("Could not start notifications handler!")
@@ -87,7 +91,7 @@ object Glob {
     }
 
     fun logDebug(logger: Logger, message: String, throwable: Throwable) {
-        if (!listOf("local").contains(Glob.envvar.GOTHBUZZ_ENVIRONMENT_NAME)) return
+        if (!listOf("local").contains(envvar.GOTHBUZZ_ENVIRONMENT_NAME)) return
 
         val filename = throwable.stackTrace[0].fileName
         val lineNumber = throwable.stackTrace[0].lineNumber

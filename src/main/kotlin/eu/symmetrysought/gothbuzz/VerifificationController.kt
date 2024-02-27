@@ -28,7 +28,7 @@ class VerifyController(private val addressResolver: HttpClientAddressResolver) {
 
 
         if (!Glob.isValidVerificationCode(code)) {
-            Glob.notifications.propagateError("""${client} tried to verify code '$code' which was invalid!""")
+            Glob.notifications.propagateError("""${client} tried to verify code "$code" which was invalid!""")
 
             val ret = VerificationFailedReturnMessage("The supplied code is not valid!")
             return HttpResponse.badRequest(ret).contentType(MediaType.APPLICATION_JSON)
@@ -36,7 +36,7 @@ class VerifyController(private val addressResolver: HttpClientAddressResolver) {
         val result = emailHandler.verifyCode(code)
 
         return if (result.isSuccess) {
-            Glob.notifications.propagateAnnouncement("""${client} verified code '$code'!""")
+            Glob.notifications.propagateAnnouncement("""${client} verified code "$code"!""")
             HttpResponse.redirect<HttpResponse<String>>(URI.create("/verified/")).status(HttpStatus.MOVED_PERMANENTLY)
         }
         else {

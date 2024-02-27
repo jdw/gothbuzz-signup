@@ -5,6 +5,9 @@ import com.google.auth.oauth2.GoogleCredentials
 import com.google.cloud.workflows.executions.v1.*
 import com.google.gson.Gson
 import com.sun.nio.sctp.NotificationHandler
+import io.micronaut.context.annotation.Requires
+import io.micronaut.core.execution.ExecutionFlow
+import io.micronaut.scheduling.annotation.Async
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.IOException
@@ -14,17 +17,10 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.util.concurrent.ExecutionException
 
-class NotificationHandler private constructor() {
+class NotificationHandler private constructor(private val executionSettings: ExecutionsSettings) {
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
-    private val credentials: GoogleCredentials
-        get() = GoogleCredentials.fromStream(Glob.envvar.GOTHBUZZ_WORKFLOW_EXEC.byteInputStream())
-                .createScoped(listOf("https://www.googleapis.com/auth/cloud-platform"))
 
-    private val executionSettings: ExecutionsSettings
-        get() = ExecutionsSettings.newBuilder()
-                .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
-                .build()
     enum class NotificationChannel {
         ANNOUNCEMENTS, ERRORS, BUZZ
     }
@@ -55,14 +51,15 @@ class NotificationHandler private constructor() {
         propagateError("""$classname.$function threw message "$message" in $filename:$lineNumber""")
     }
 
-
-    @Throws(IOException::class, InterruptedException::class, ExecutionException::class)
+    @Async(value = "notifications")
+    //@Throws(IOException::class, InterruptedException::class, ExecutionException::class)
     private fun workflowsExecution(workflowId: String, fields: Map<String, String>) {
         //https://cloud.google.com/workflows/docs/executing-workflow#client-libraries
         ExecutionsClient.create(executionSettings).use { executionsClient ->
             // Construct the fully qualified location path.
             val parent: WorkflowName = WorkflowName.of(Glob.envvar.GOTHBUZZ_PROJECT_ID, Glob.envvar.GOTHBUZZ_GOOGLE_LOCATION_ID, workflowId)
             val body = Gson().toJson(fields)
+
             Glob.logDebug(logger, "$workflowId: body=$body", Throwable())
             val request: CreateExecutionRequest = CreateExecutionRequest.newBuilder()
                 .setParent(parent.toString())
@@ -92,26 +89,37 @@ class NotificationHandler private constructor() {
                 } else {
                     val stateName = execution.getState().name
                     val executionResult = execution.result
-                    Glob.logDebug(logger, "executionName=$executionName", Throwable())
-                    Glob.logDebug(logger, "stateName=$stateName", Throwable())
-                    Glob.logDebug(logger, "executionResult=$executionResult", Throwable())
+
                     if ("SUCCEEDED" != stateName) {
                         // TODO send to prod-errors webhook
+                        val executionId = executionName.split("/").last()
+                        val errorMessage = """{"content": "Workflow '$workflowId' failed! See https://console.cloud.google.com/workflows/workflow/europe-west1/dev-propagator/execution/$executionId for more!"}"""
+
+                        webhookHttpPost(errorMessage)
                         logger.warn("Execution finished with state: $stateName")
                         logger.warn("Execution results: $executionResult")
+                        logger.warn(errorMessage)
                     }
                 }
             }
         }
     }
+
+
     companion object {
         fun newBuilder(): Builder {
             return Builder()
         }
+
+
+        @Async(value = "notifications")
         // THis function should not take envvars from Glob
         fun notifyInitializationError(e: ExceptionInInitializerError) {
             val logger: Logger = LoggerFactory.getLogger(NotificationHandler::class.java)
             val env = System.getenv("GOTHBUZZ_ENVIRONMENT_NAME")
+
+            if ("local" == env) return
+
             val message = e.message
             val lineNumber = e.stackTrace.get(0).lineNumber.toString()
             val classname = e.stackTrace.get(0).className.toString()
@@ -119,25 +127,20 @@ class NotificationHandler private constructor() {
             val function = e.stackTrace.get(0).methodName
             val content = """$classname.$function threw message "$message" in $filename:$lineNumber"""
 
-            if ("local" == env) {
-                //TODO Make crash if called to soon Glob.logDebug(logger, content, e)
-                Glob.logDebug(logger, content, e)
-                return
-            }
-
-            val prodErrorsWebhook = System.getenv("PROD_ERRORS_WEBHOOK")
-
-            if (null == prodErrorsWebhook) {
-                logger.warn("Could not initialize startup error notifications properly. Quiting!")
-                return
-            }
-
-            webhookHttpPost(prodErrorsWebhook, """{"content": "${content.replace("\"", "'")}"}""")
+            webhookHttpPost("""{"content": "${content.replace("\"", "'")}"}""")
         }
 
-        private fun webhookHttpPost(prodErrorsWebhookUrl: String, body: String) {
+        @Async(value = "notifications")
+        private fun webhookHttpPost(body: String) {
+            val prodErrorsWebhook = System.getenv("ERRORS_WEBHOOK")
+
+            if (null == prodErrorsWebhook) {
+                println("Could not initialize properly! ERRORS_WEBHOOK not set! Quiting!")
+                return
+            }
+
             val request = HttpRequest.newBuilder()
-                .uri(URI.create(prodErrorsWebhookUrl))
+                .uri(URI.create(prodErrorsWebhook))
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .header("Content-Type", "application/json")
                 .header("Accept", "application/json")
@@ -149,6 +152,18 @@ class NotificationHandler private constructor() {
     }
 
     class Builder {
-        fun build() = NotificationHandler()
+        private var executionSettings: ExecutionsSettings? = null
+        fun build() = NotificationHandler(executionSettings!!)
+
+        fun addCredentials(serviceAccountKey: String): Builder {
+            val credentials = GoogleCredentials.fromStream(serviceAccountKey.byteInputStream())
+                .createScoped(listOf("https://www.googleapis.com/auth/cloud-platform"))
+
+            executionSettings = ExecutionsSettings.newBuilder()
+                .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
+                .build()
+
+            return this
+        }
     }
 }
