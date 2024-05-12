@@ -1,8 +1,21 @@
 # Notes for gothbuzz-signup
 ## Prerequisites
+    You need a recent version of Java and Gradle. One easy way to install is with [SDKman](https://sdkman.io/install).
+
+
+    `sdk install java 17.0.9-oracle`
+    `sdk install gradle`
 ### Expected environment variables
 * GOTHBUZZ_BUCKET_NAME
-* GOTHBUZZ_ENVIRONMENT_NAME
+* GOTHBUZZ_ENVIRONMENT_NAME=local
+* GOTHBUZZ_BUCKET_SA_KEY
+* GOTHBUZZ_GOOGLE_LOCATION_ID
+* GOTHBUZZ_NO_REPLY=noreply@example.com
+* GOTHBUZZ_PROJECT_ID
+* GOTHBUZZ_PROPAGATOR
+* GOTHBUZZ_SENDGRID_API_KEY=SG.000000000000000000000000000000000000000000000000000000000000000000
+* GOTHBUZZ_VERIFICATION_CODE_LENGTH=10
+* GOTHBUZZ_WORKFLOW_EXEC=test
 ## How to build and run
 ### Followed the steps in this article
 [DEPLOY AN HTTP FUNCTION TO GOOGLE CLOUD FUNCTIONS](https://guides.micronaut.io/latest/micronaut-google-cloud-http-function-gradle-java.html)
