@@ -36,8 +36,14 @@ dependencies {
 application {
     mainClass.set("eu.symmetrysought.gothbuzz.ApplicationKt")
 }
+
 java {
-    sourceCompatibility = JavaVersion.toVersion("17")
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(javaVersion))
+    }
+
+    sourceCompatibility = JavaVersion.toVersion(javaVersion)
+    targetCompatibility = JavaVersion.toVersion(javaVersion)
 }
 
 
