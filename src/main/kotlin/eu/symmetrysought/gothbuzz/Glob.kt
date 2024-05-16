@@ -32,23 +32,28 @@ object Glob {
         }
 
         envvar = environmentVariablesHandlerBuilder.build()
-        logger.info("All environment variables configured and found to be OK!")
+        logger.info("Environment variables - OK!")
 
         // Load Google Cloud Storage credentials
         val credentials =  try {
-            GoogleCredentials.fromStream(envvar.GOTHBUZZ_BUCKET_SA_KEY.byteInputStream())
+            val ret = GoogleCredentials.fromStream(envvar.GOTHBUZZ_BUCKET_SA_KEY.byteInputStream())
                 .createScoped(listOf("https://www.googleapis.com/auth/cloud-platform"));
+            logger.info("Credentials - OK!")
+            ret
         }
         catch (_: Exception) {
             throw ExceptionInInitializerError("Failed getting Google credentials with GOTHBUZZ_BUCKET_SA_KEY!")
         }
 
+
         // Create Storage client
         val storage = try {
-            StorageOptions.newBuilder()
+            val ret = StorageOptions.newBuilder()
                 .setCredentials(credentials)
                 .build()
                 .service
+            logger.info("Storage - OK!")
+            ret
         }
         catch (_: Exception) {
             throw ExceptionInInitializerError("Failed getting storage!")
@@ -56,21 +61,23 @@ object Glob {
 
         try {
             bucket = storage.get(envvar.GOTHBUZZ_BUCKET_NAME)
+            logger.info("Buckets - OK!")
         }
         catch (_: Exception) {
-            throw ExceptionInInitializerError("Could not get bucket with GOTHBUZZ_BUCKET_NAME!")
+            throw ExceptionInInitializerError("Could not get bucket from environment variable GOTHBUZZ_BUCKET_NAME!")
         }
+
 
         try {
             notifications = NotificationHandler.newBuilder()
                 .addCredentials(envvar.GOTHBUZZ_WORKFLOW_EXEC)
                 .build()
+            logger.info("Notifications - OK!")
         }
         catch (_: Exception) {
             throw ExceptionInInitializerError("Could not start notifications handler!")
         }
 
-        logger.info("Glob initialized OK...")
     }
 
     fun generateRandomString(): String {
@@ -111,9 +118,37 @@ object Glob {
                 else ret.replace("{{$name}}", value)
         }
 
+        ret = ret.replace("{{surveymessage}}", renderSurveyMessage())
+
         if ("" != bodyOverride) {
             ret = ret.replace("{{body}}", bodyOverride)
         }
+
+        return ret
+    }
+
+    private fun renderSurveyMessage(): String {
+        var ret = "Please take our surveys and don't hesitate to suggest further questions! It really helps us understand how to develop the site and what wishes and demands the scene has!"
+
+        val hrefs = arrayOf(
+            "https://docs.google.com/forms/d/1PTLzNUi1IUWgZSxrwq2_R3EXp6Azl4kMTF2pUauwBBg/prefill",
+            "https://docs.google.com/forms/d/10Qf9wkP1omDncP269fcMod1pG0KAlRoYPi83Jt7UdMY/prefill")
+        val comments = arrayOf(
+            "The survey for you as a professional in the goth scene!",
+            "The survey for you as a private person in the goth scene!")
+        val texts = arrayOf(
+            "professionals",
+            "General survey! \uD83E\uDEE1")
+
+        ret += """<ul>"""
+        for (idx in hrefs.indices) {
+            val t = texts[idx]
+            val c = comments[idx]
+            val h = hrefs[idx]
+
+            ret += """<li><a href="$h">$t</a> - $c</li>"""
+        }
+        ret += "</ul>"
 
         return ret
     }

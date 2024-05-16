@@ -23,7 +23,7 @@ class CheckEnvironmentAndConfiguration : ApplicationEventListener<StartupEvent> 
 			NotificationHandler.notifyInitializationError(e)
 			throw e
 		}
-		logger.info("Environment was found to be OK!")
+		logger.info("We're in the pipe - Five by five!")
 	}
 }
 

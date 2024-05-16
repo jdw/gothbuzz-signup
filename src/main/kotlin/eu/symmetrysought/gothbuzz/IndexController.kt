@@ -23,6 +23,7 @@ class IndexController(private val addressResolver: HttpClientAddressResolver) {
         val data = IndexController::class.java.getResource("/web/index.json")!!.readText()
         val form = IndexController::class.java.getResource("/web/form.html")!!.readText()
         val body = Glob.applyTemplate(base, data, form)
+
         return HttpResponse.ok(body).contentType(MediaType.TEXT_HTML)
     }
 }

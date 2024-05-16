@@ -42,8 +42,9 @@ or
 ### Compile and upload
     ./gradlew shadowJar
     cd build/libs
-    (remove all JARs except the latest)
-     gcloud functions deploy <gradle project.name> --entry-point io.micronaut.gcp.function.http.HttpFunction --runtime java17 --trigger-http --gen2 --allow-unauthenticated
+(remove all JARs except the latest)
+     
+    gcloud functions deploy <gradle project.name> --entry-point io.micronaut.gcp.function.http.HttpFunction --runtime java17 --trigger-http --gen2 --allow-unauthenticated
 
 to expose environment variables or secrets to the function, add
     
